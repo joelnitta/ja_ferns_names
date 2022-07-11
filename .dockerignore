@@ -1,0 +1,17 @@
+*.R
+*.Rproj
+*.job
+.Rprofile
+.Renviron
+.gitignore
+_targets
+docs
+intermediates
+prep_ref_seqs_store
+R
+renv
+reports
+results
+temp
+trash
+working
