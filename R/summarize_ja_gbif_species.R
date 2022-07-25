@@ -11,31 +11,31 @@
 #' 2nd degree mesh cell
 #'
 summarize_ja_gbif_species <- function(
-	gbif_names_resolved_mapped, ja_ferns_gbif_accepted, green_list, japan_mesh2
+  gbif_names_resolved_mapped, ja_ferns_gbif_accepted, green_list, japan_mesh2
 ) {
 
-	ja_ferns_gbif_accepted %>%
-		rename(gbif_name = scientificName) %>%
-		left_join(gbif_names_resolved_mapped, by = "gbif_name") %>%
-		select(species = ja_name, longitude, latitude) %>%
-		# Drop species that couldn't be resolved
-		filter(!is.na(species)) %>%
-		# Add meshID by spatial join
-		sf::st_as_sf(
-			coords = c("longitude", "latitude"),
-			# Use same CRS as the mask
-			crs = sf::st_crs(japan_mesh2)) %>%
-		sf::st_join(japan_mesh2) %>%
-		sf::st_drop_geometry() %>%
-		# Count abundance of each species per cell
-		group_by(id) %>%
-		count(species, name = "abun") %>%
-		ungroup() %>%
-		# Add green list data
-		left_join(
-			select(green_list, species = sci_name, is_endemic, red_status),
-			by = "species"
-		) %>%
-		verify(all(species %in% green_list$sci_name))
+  ja_ferns_gbif_accepted %>%
+    rename(gbif_name = scientificName) %>%
+    left_join(gbif_names_resolved_mapped, by = "gbif_name") %>%
+    select(species = ja_name, longitude, latitude) %>%
+    # Drop species that couldn't be resolved
+    filter(!is.na(species)) %>%
+    # Add meshID by spatial join
+    sf::st_as_sf(
+      coords = c("longitude", "latitude"),
+      # Use same CRS as the mask
+      crs = sf::st_crs(japan_mesh2)) %>%
+    sf::st_join(japan_mesh2) %>%
+    sf::st_drop_geometry() %>%
+    # Count abundance of each species per cell
+    group_by(id) %>%
+    count(species, name = "abun") %>%
+    ungroup() %>%
+    # Add green list data
+    left_join(
+      select(green_list, species = sci_name, is_endemic, red_status),
+      by = "species"
+    ) %>%
+    verify(all(species %in% green_list$sci_name))
 
 }
