@@ -10,3 +10,7 @@ library(taxastand)
 library(dwctaxon)
 library(scico)
 library(sf)
+library(quarto)
+library(knitr)
+
+conflict_prefer("filter", "dplyr")

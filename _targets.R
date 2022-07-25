@@ -7,37 +7,24 @@ lapply(list.files("./R", full.names = TRUE), source)
 ## Define workflow plan
 tar_plan(
   # Load raw data ----
-  # - Japan fern names including synonyms
-  # from Index to Ferns and Lycophytes of Japan
-  # http://jpfern.la.coocan.jp/names/
-  tar_file_read(
-    ja_fern_names_raw,
-    "_targets/user/JpFernName220119.xlsx",
-    read_excel(path = !!.x, col_types = "text")
-  ),
-  # - Japan fern names, accepted names only
+  # - GreenList: Japan fern names, including conservation status
   tar_file_read(
     green_list_raw,
     "_targets/user/FernGreenListV1.01.xls",
     read_excel(path = !!.x, col_types = "text")
   ),
   # - Japan fern occurrences downloaded from GBIF
-  tar_file_read(
+  # https://doi.org/10.15468/dl.d75p7s
+  tar_target(
     ja_ferns_gbif_raw,
-    "_targets/user/0172287-210914110416597.csv",
-    read_tsv(!!.x)
+    load_gbif_japan_occ()
   ),
   # - pteridocat taxonomic database
-  tar_file_read(
-    pteridocat,
-    "_targets/user/pteridocat.RDS",
-    readRDS(!!.x)
-  ),
+  pteridocat = pteridocat::pteridocat,
   # - GBIF backbone taxonomy for pteridophytes
-  tar_file_read(
+  tar_target(
     gbif_pteridos,
-    "_targets/user/gbif_pteridos.RDS",
-    readRDS(!!.x)
+    load_gbif_pterido_taxonomy()
   ),
   # Shape file downloaded from http://gis.biodic.go.jp/
   # http://gis.biodic.go.jp/BiodicWebGIS/Questionnaires?kind=mesh2&filename=mesh2.zip #nolint
@@ -53,50 +40,62 @@ tar_plan(
   # Wrangle data ----
 
   # Scientific names
-  # - Japan fern names, including synonyms
-  ja_fern_names = clean_ja_fern_names(ja_fern_names_raw),
   # - Japan fern names, accepted names (green list)
   green_list = clean_green_list(green_list_raw),
-  # - Japan fern names in Darwin Core format for resolving names
-  ja_ferns_dwc = make_ja_dwc(ja_fern_names, green_list),
+  # - remove hybrids (taxastand can't handle)
+  green_list_no_hybrids = filter(
+    green_list,
+    str_detect(sci_name, " x | × ", negate = TRUE)
+  ),
 
   # Spatial data
   # - filter GBIF data to only points occurring in Japan
   ja_ferns_gbif_filtered = filter_gbif(ja_ferns_gbif_raw, japan_mesh2),
   # - map GBIF names to accepted names in GBIF backbone taxonomy
   ja_ferns_gbif_accepted = map_raw_gbif_names_to_acc(
-    ja_ferns_gbif_filtered, gbif_pteridos),
+    ja_ferns_gbif = ja_ferns_gbif_filtered,
+    gbif_pteridos = gbif_pteridos),
   # - make list of GBIF names for resolving
   ja_gbif_names = count(ja_ferns_gbif_accepted, scientificName),
 
   # Resolve names
-  # - resolve Japan fern names to pteridocat
-  ja_ferns_dwc_accepted = extract_ja_accepted(ja_ferns_dwc),
-  ja_ferns_match_to_pt = ts_resolve_names(
-    ja_ferns_dwc_accepted,
+  # - Resolve GreenList names to pteridocat,
+  # filter to single matches
+  green_names_resolved_pt = ts_resolve_names(
+    green_list_no_hybrids$sci_name,
     pteridocat,
     max_dist = 5,
     match_no_auth = TRUE,
     match_canon = TRUE,
-    collapse_infra = TRUE
+    collapse_infra = TRUE,
+    docker = TRUE
   ),
-  # - Resolve GBIF names to pteridocat
+  green_names_resolved_pt_single = get_single_matches(green_names_resolved_pt),
+  # - Resolve GBIF names to pteridocat,
+  # filter to single matches
   gbif_names_resolved_pt = ts_resolve_names(
     ja_gbif_names$scientificName,
     pteridocat,
     max_dist = 5,
     match_no_auth = TRUE,
     match_canon = TRUE,
-    collapse_infra = TRUE
+    collapse_infra = TRUE,
+    docker = TRUE
   ),
-  # - Map names resolved by pteridocat to Fern Index names
+  gbif_names_resolved_pt_single = get_single_matches(gbif_names_resolved_pt),
+  # - Merge GreenList and GBIF names by their resolved names in pteridocat
   gbif_names_resolved_mapped = map_resolved_pt_to_ja(
-    gbif_names_resolved_pt,
-    ja_ferns_match_to_pt
+    green_names_resolved_pt_single,
+    gbif_names_resolved_pt_single
   ),
   # Summarize spatial data
   mesh_species = summarize_ja_gbif_species(
     gbif_names_resolved_mapped, ja_ferns_gbif_accepted, green_list, japan_mesh2
   ),
-  mesh_rich = summarize_ja_gbif_rich(mesh_species, japan_mesh2)
+  mesh_rich = summarize_ja_gbif_rich(mesh_species, japan_mesh2),
+  # Render report
+  tar_quarto(
+    report,
+    path = "index.qmd"
+  )
 )
