@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-0.9.579">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>index</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+<section id="resolving-taxon-names-of-japanese-ferns-a-case-study" class="level1">
+<h1>Resolving taxon names of Japanese ferns: A case study</h1>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>This analysis shows how the <a href="https://github.com/joelnitta/taxastand">taxastand</a> R package can be used to join datasets by resolving species names to a common, custom taxonomy.</p>
+<p>The goal is to generate a heatmap of endangered fern species in Japan.</p>
+</section>
+<section id="methods" class="level2">
+<h2 class="anchored" data-anchor-id="methods">Methods</h2>
+<p>There are two data sources:</p>
+<ul>
+<li><p><a href="https://gbif.org">GBIF</a>, which includes distribution data (occurrence records)</p></li>
+<li><p><a href="https://doi.org/10.5061/dryad.4362p32">Green List</a>, which includes conservation status for the ferns of Japan.</p></li>
+</ul>
+<p>However, these data sources use different taxonomies, so names may not match between them. So, name harmonization is done by resolving names in each of the two sources to the <a href="https://github.com/fernphy/pteridocat">pteridocat</a> taxonomic database first, then merging.</p>
+<div class="cell">
+
+</div>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<section id="name-resolution" class="level3">
+<h3 class="anchored" data-anchor-id="name-resolution">Name resolution</h3>
+<div class="cell">
+
+</div>
+<p>Of 727 scientific names in the Green List (hybrid formulas excluded), 717 names were successfully resolved.</p>
+<p>Of 1012 scientific names in the GBIF data, 998 names were successfully resolved.</p>
+<p>708 species were successfully mapped from GBIF data to Green List data via pteridocat, including 182782 occurrences (<a href="#tbl-gbif-summary">Table&nbsp;1</a>).</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="tbl-gbif-summary" class="anchored">
+<table class="table table-sm table-striped">
+<caption>Table 1: Types of matches for species names in GBIF successfully resolved to pteridocat</caption>
+<colgroup>
+<col style="width: 80%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">match_group</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Exact match</td>
+<td style="text-align: right;">411</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Difference in punctuation</td>
+<td style="text-align: right;">173</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Missing author</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Taxonomic rule</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fuzzy</td>
+<td style="text-align: right;">13</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Plots of species richness (<a href="#fig-richness">Figure&nbsp;1</a>) and endangered species richness (<a href="#fig-endangered">Figure&nbsp;2</a>) appeared mostly similar to a previous study using data not obtained from GBIF <span class="citation" data-cites="Nitta2022a">(<a href="#ref-Nitta2022a" role="doc-biblioref">Nitta et al. 2022</a>)</span>, supporting the reliability of this method. However, richness of endangered species (<a href="#fig-endangered">Figure&nbsp;2</a>) appeared slightly higher than in <span class="citation" data-cites="Nitta2022a">Nitta et al. (<a href="#ref-Nitta2022a" role="doc-biblioref">2022</a>)</span>, which could be due to artifacts in GBIF data (false positives). Since <a href="#fig-endangered">Figure&nbsp;2</a> is shown on a log-scale, even a very few number of false positives will clearly appear on the map.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-richness" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="index_files/figure-html/fig-richness-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 1: Species richness of all Japanese ferns, GBIF data matched to Green List via pteridocat</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-endangered" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="index_files/figure-html/fig-endangered-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 2: Species richness of endangered Japanese ferns, GBIF data matched to Green List via pteridocat</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+
+</section>
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
+<div id="ref-Nitta2022a" class="csl-entry" role="doc-biblioentry">
+Nitta, Joel H., Brent D. Mishler, Wataru Iwasaki, and Atsushi Ebihara. 2022. <span>“Spatial Phylogenetics of Japanese Ferns: Patterns, Processes, and Implications for Conservation.”</span> <em>American Journal of Botany</em> 109 (5): 727–45. <a href="https://doi.org/10.1002/ajb2.1848">https://doi.org/10.1002/ajb2.1848</a>.
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
