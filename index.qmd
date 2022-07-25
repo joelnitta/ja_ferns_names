@@ -1,0 +1,199 @@
+---
+format: "html"
+bibliography: "references.yaml"
+---
+
+# Resolving taxon names of Japanese ferns: A case study
+
+## Introduction
+
+This analysis shows how the [taxastand](https://github.com/joelnitta/taxastand) R package can be used to join datasets by resolving species names to a common, custom taxonomy.
+
+The goal is to generate a heatmap of endangered fern species in Japan.
+
+## Methods
+
+There are two data sources:
+
+- [GBIF](https://gbif.org), which includes distribution data (occurrence records) 
+
+- [Green List](https://doi.org/10.5061/dryad.4362p32), which includes conservation status for the ferns of Japan.
+
+However, these data sources use different taxonomies, so names may not match between them. So, name harmonization is done by resolving names in each of the two sources to the [pteridocat](https://github.com/fernphy/pteridocat) taxonomic database first, then merging.
+
+```{r}
+#| label: load-data
+#| echo: false
+#| message: false
+
+source("packages.R")
+
+tar_load(c(
+  ja_ferns_gbif_accepted,
+  gbif_names_resolved_pt,
+  gbif_names_resolved_mapped,
+  mesh_species,
+  japan_mesh2,
+  mesh_rich,
+  green_names_resolved_pt_single,
+  green_list_no_hybrids,
+  ja_gbif_names,
+  gbif_names_resolved_pt_single))
+```
+
+## Results
+
+### Name resolution
+
+```{r}
+#| label: match-stats
+#| echo: false
+#| results: "hide"
+
+# Counts
+green_list_species_n <- green_list_no_hybrids %>%
+  pull(sci_name) %>%
+  n_distinct()
+
+green_list_species_resolved_n <- green_names_resolved_pt_single %>%
+  pull(query) %>%
+  n_distinct()
+
+gbif_species_n <- ja_gbif_names %>%
+  pull(scientificName) %>%
+  n_distinct()
+
+gbif_species_resolved_n <- gbif_names_resolved_pt_single %>%
+  pull(query) %>%
+  n_distinct()
+```
+
+Of `r green_list_species_n` scientific names in the Green List (hybrid formulas excluded), `r green_list_species_resolved_n` names were successfully resolved.
+
+Of `r gbif_species_n` scientific names in the GBIF data, `r gbif_species_resolved_n` names were successfully resolved.
+
+`r nrow(gbif_names_resolved_mapped)` species were successfully mapped from GBIF data to Green List data via pteridocat, including `r nrow(mesh_species)` occurrences (@tbl-gbif-summary).
+
+```{r}
+#| label: tbl-gbif-summary
+#| tbl-cap: "Types of matches for species names in GBIF successfully resolved to pteridocat"
+#| tbl-colwidths: [80,20]
+#| echo: false
+#| message: false
+
+table <-
+gbif_names_resolved_mapped %>%
+  filter(!is.na(ja_name)) %>%
+  select(query = gbif_name) %>%
+  unique() %>%
+  left_join(
+    unique(select(gbif_names_resolved_pt, query, match_type)),
+    by = "query") %>%
+  assert(is_uniq, query) %>%
+  count(match_type) %>%
+  mutate(
+    match_group = case_when(
+      match_type %in% c(
+        "auto_basexin", "auto_cfonly",
+        "auto_exin", "auto_exin-", "auto_exin+") ~ "Taxonomic rule",
+      str_detect(match_type, "auto_noauth") ~ "Missing author",
+      str_detect(match_type, "punc") ~ "Difference in punctuation",
+      str_detect(match_type, "fuzzy") ~ "Fuzzy",
+      str_detect(match_type, "exact") ~ "Exact match",
+    )
+  ) %>%
+  group_by(match_group) %>%
+  summarize(
+    n = sum(n)
+  ) %>%
+  arrange(desc(n))
+
+kable(table)
+```
+
+Plots of species richness (@fig-richness) and endangered species richness (@fig-endangered) appeared mostly similar to a previous study using data not obtained from GBIF [@Nitta2022a], supporting the reliability of this method. However, richness of endangered species (@fig-endangered) appeared slightly higher than in @Nitta2022a, which could be due to artifacts in GBIF data (false positives). Since @fig-endangered is shown on a log-scale, even a very few number of false positives will clearly appear on the map.
+
+```{r}
+#| label: fig-richness
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: Species richness of all Japanese ferns, GBIF data matched to Green List via pteridocat
+
+ferns_rich_plot <-
+  mesh_rich %>%
+  mutate(rich = replace_na(rich, 0)) %>%
+  ggplot() +
+  geom_sf(
+    aes(fill = rich),
+    color = "transparent") +
+  scale_fill_scico(
+    "No. species",
+    palette = "lajolla",
+    na.value = "grey80",
+    labels = function(x) scales::number(x, accuracy = 1),
+    breaks = c(0, 50, 100, 150, 200, 250)) +
+  scale_x_continuous(breaks = c(130, 140), limits = c(122,147.4)) +
+  ylim(c(24, 46)) +
+  theme_gray(base_size = 16) +
+  theme(
+    panel.grid.major = element_line(size = 0.1, color = "dark grey"),
+    panel.grid.minor = element_blank(),
+    plot.subtitle = element_text(face = "bold"),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    legend.title = element_text(size = 20 * 1.5 / .pt),
+    legend.text = element_text(size = 16 * 1.5 / .pt),
+    legend.justification = c(0, 1), legend.position = c(0, 1)
+  )
+
+ggsave(
+  plot = ferns_rich_plot, file = "results/ferns_rich.png",
+  height = 5, width = 5, units = "in")
+
+ferns_rich_plot
+```
+
+```{r}
+#| label: fig-endangered
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+#| fig-cap: Species richness of endangered Japanese ferns, GBIF data matched to Green List via pteridocat
+
+endangered_ferns_rich_plot <-
+  mesh_rich %>%
+  mutate(rich_endan = replace_na(rich_endan, 0)) %>%
+  ggplot() +
+  geom_sf(
+    aes(fill = rich_endan),
+    color = "transparent") +
+  scale_fill_scico(
+    "No. species\n(log scale)",
+    trans = "log",
+    palette = "lajolla", na.value = "grey80",
+    oob = scales::squish_infinite,
+    labels = function(x) scales::number(x, accuracy = 1),
+    breaks = c(3, 6, 12, 24, 48)) +
+  scale_x_continuous(breaks = c(130, 140), limits = c(122,147.4)) +
+  ylim(c(24, 46)) +
+  theme_gray(base_size = 16) +
+  theme(
+    panel.grid.major = element_line(size = 0.1, color = "dark grey"),
+    panel.grid.minor = element_blank(),
+    plot.subtitle = element_text(face = "bold"),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    legend.title = element_text(size = 20 * 1.5 / .pt),
+    legend.text = element_text(size = 16 * 1.5 / .pt),
+    legend.justification = c(0, 1), legend.position = c(0, 1)
+  )
+
+ggsave(
+  plot = endangered_ferns_rich_plot, file = "results/endangered_ferns_rich.png",
+  height = 5, width = 5, units = "in")
+
+suppressWarnings(
+  endangered_ferns_rich_plot)
+```

@@ -1,0 +1,38 @@
+---
+references:
+- id: Nitta2022a
+  accessed:
+    - year: 2022
+      month: 6
+      day: 7
+  author:
+    - family: Nitta
+      given: Joel H.
+    - family: Mishler
+      given: Brent D.
+    - family: Iwasaki
+      given: Wataru
+    - family: Ebihara
+      given: Atsushi
+  citation-key: Nitta2022a
+  container-title: American Journal of Botany
+  container-title-short: American J of Botany
+  DOI: 10.1002/ajb2.1848
+  ISSN: 0002-9122, 1537-2197
+  issue: '5'
+  issued:
+    - year: 2022
+      month: 4
+      day: 18
+  language: en
+  page: 727-745
+  publisher: Wiley Periodicals LLC on behalf of Botanical Society of America
+  source: DOI.org (Crossref)
+  title: >-
+    Spatial phylogenetics of Japanese ferns: Patterns, processes, and
+    implications for conservation
+  title-short: Spatial phylogenetics of Japanese ferns
+  type: article-journal
+  URL: https://onlinelibrary.wiley.com/doi/10.1002/ajb2.1848
+  volume: '109'
+...
