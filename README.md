@@ -1,12 +1,21 @@
 # ja_ferns_names
 
-Project to standardize names of Japanese ferns from GBIF using the taxastand R package.
+Project to standardize names of Japanese ferns from GBIF using the [taxastand](https://github.com/joelnitta/taxastand) R package.
 
-## Running in docker
+## Installing R packages
 
-A docker image is provided to run the code. Launch it like this:
+`renv` is used to maintain package versions. Packages for this project can be installed with `renv::restore()`.
 
-```
-cd ja_ferns_names # Navigate to the folder containing taxastand first
-docker run --rm -dt -v ${PWD}:/home/rstudio/ja_ferns_names -p 8787:8787 -e DISABLE_AUTH=true joelnitta/ja_ferns_names:latest
-```
+## Datafiles
+
+Currently, one data file needs to be downloaded manually. It is the "2-degree mesh map" (`mesh2.zip`), available from http://gis.biodic.go.jp/ (in Japanese). This should be saved to `_targets/user/`.
+
+## Docker
+
+This code requires [docker](https://www.docker.com/) to be installed.
+
+## Running the example
+
+After installing packages, run `targets::tar_make()`. The analysis will run and a final report will be produced as `index.html`.
+
+The rendered report can be viewed at https://joelnitta.github.io/ja_ferns_names/
