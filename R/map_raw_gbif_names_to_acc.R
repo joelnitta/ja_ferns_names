@@ -42,7 +42,7 @@ map_raw_gbif_names_to_acc <- function(ja_ferns_gbif, gbif_pteridos) {
 				acceptedNameUsageID),
 			by = "scientificName") %>%
 		assert(not_na, acceptedNameUsageID) %>%
-		left_join(
+		inner_join(
 			select(
 				gbif_species_level_tax,
 				acc_scientificName = scientificName,
